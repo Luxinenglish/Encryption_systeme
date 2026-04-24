@@ -3,6 +3,7 @@
 /build
 /dist
 /installer_output
+/AppDir
 *.spec
 *.iss
 .gitignore
