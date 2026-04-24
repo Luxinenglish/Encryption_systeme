@@ -12,6 +12,7 @@ Application desktop Python pour chiffrer et déchiffrer des fichiers/dossiers av
     - ChaCha20-Poly1305
 - Glisser-déposer (si `tkinterdnd2` est disponible)
 - Gestion locale des clés (sauvegarde JSON)
+- Vérification de mise à jour via GitHub Releases (asset adapté à l'OS)
 
 ## Technologies
 
@@ -33,3 +34,13 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python app.py
+```
+
+## Configuration des mises à jour
+
+Le système de MAJ utilise les releases GitHub. Configure ces valeurs dans `constants.py`:
+
+- `APP_VERSION` : version locale actuelle de l'application
+- `GITHUB_REPO` : dépôt au format `owner/repo`
+
+L'application détecte automatiquement un asset compatible selon l'OS (par exemple `.exe` sous Windows, `.deb` sur Debian/Ubuntu) et propose son téléchargement.
