@@ -4,6 +4,8 @@
 /dist
 /installer_output
 /AppDir
+.venv
+.venv-linux
 *.spec
 *.iss
 .gitignore
