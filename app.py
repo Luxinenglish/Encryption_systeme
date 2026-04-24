@@ -1,4 +1,6 @@
 import os
+import subprocess
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -7,7 +9,7 @@ from tkinter import messagebox
 
 from constants import (
     ACCENT, BG, BG2, BG3, ERROR, MUTED, SUCCESS, TEXT,
-    F_BODY, F_MONO, F_SMALL, F_TITLE,
+    F_BODY, F_MONO, F_SMALL, F_TITLE, APP_VERSION, GITHUB_REPO,
 )
 from crypto import (
     ALGO_FERNET, ALGO_LABELS,
@@ -16,6 +18,7 @@ from crypto import (
 )
 from key_manager import KeyManager
 from auth_manager import AuthManager
+from updater import UpdateService
 from widgets import DND_AVAILABLE, ROOT_CLASS, DropZone, action_btn, ghost_btn
 
 
@@ -28,12 +31,16 @@ class App(ROOT_CLASS):
         self.configure(bg=BG)
         self._set_icon()
         self._auth = AuthManager()
-        if not self._require_access_password():
+        self._updater = UpdateService(repo=GITHUB_REPO, current_version=APP_VERSION)
+        self._is_checking_update = False
+        vault_key = self._require_access_password()
+        if not vault_key:
             self.destroy()
             return
-        self._km = KeyManager()
+        self._km = KeyManager(vault_key=vault_key)
         self._build_ui()
         self.bind("<Configure>", self._on_resize)
+        self.after(1500, self._check_updates_silent)
 
 
 
@@ -46,42 +53,66 @@ class App(ROOT_CLASS):
             self.iconphoto(True, icon)
             self._icon = icon  # keep a reference to prevent garbage collection
 
-    # ── Access password ──────────────────────────────────────────────────────────────────
+    # ── Access password ───────────────────────────────────────────────────────
 
-    def _require_access_password(self) -> bool:
+    def _require_access_password(self) -> str | None:
         if not self._auth.is_configured():
             messagebox.showinfo(
                 "Premiere utilisation",
                 "Definis un mot de passe pour proteger l'acces au coffre."
             )
             return self._show_setup_password_dialog()
-        return self._show_unlock_dialog()
+        return self._show_unlock_dialog( )
 
-    def _show_setup_password_dialog(self) -> bool:
+    def _show_setup_password_dialog(self) -> str | None:
         popup = tk.Toplevel(self, bg=BG)
         popup.title("Configurer le mot de passe")
         popup.geometry("420x250")
         popup.resizable(False, False)
         popup.grab_set()
 
-        result = {"ok": False}
+        result: dict[str, str | None] = {"vault_key": None}
 
         tk.Label(
-            popup, text="Nouveau mot de passe", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=BG
+            popup,
+            text="Nouveau mot de passe",
+            font=("Segoe UI", 11, "bold"),
+            fg=TEXT,
+            bg=BG,
         ).pack(anchor="w", padx=20, pady=(20, 6))
 
         pwd_var = tk.StringVar()
         pwd2_var = tk.StringVar()
 
-        tk.Entry(popup, textvariable=pwd_var, show="*", font=F_BODY, fg=TEXT, bg=BG3,
-                 insertbackground=TEXT, relief="flat").pack(fill="x", padx=20, ipady=8)
+        tk.Entry(
+            popup,
+            textvariable=pwd_var,
+            show="*",
+            font=F_BODY,
+            fg=TEXT,
+            bg=BG3,
+            insertbackground=TEXT,
+            relief="flat",
+        ).pack(fill="x", padx=20, ipady=8)
 
         tk.Label(
-            popup, text="Confirmer le mot de passe", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=BG
+            popup,
+            text="Confirmer le mot de passe",
+            font=("Segoe UI", 11, "bold"),
+            fg=TEXT,
+            bg=BG,
         ).pack(anchor="w", padx=20, pady=(14, 6))
 
-        tk.Entry(popup, textvariable=pwd2_var, show="*", font=F_BODY, fg=TEXT, bg=BG3,
-                 insertbackground=TEXT, relief="flat").pack(fill="x", padx=20, ipady=8)
+        tk.Entry(
+            popup,
+            textvariable=pwd2_var,
+            show="*",
+            font=F_BODY,
+            fg=TEXT,
+            bg=BG3,
+            insertbackground=TEXT,
+            relief="flat",
+        ).pack(fill="x", padx=20, ipady=8)
 
         status = tk.Label(popup, text="", font=F_SMALL, fg=ERROR, bg=BG)
         status.pack(anchor="w", padx=20, pady=(8, 0))
@@ -98,41 +129,73 @@ class App(ROOT_CLASS):
                 return
 
             self._auth.setup_password(pwd)
-            result["ok"] = True
+            result["vault_key"] = self._auth.get_vault_key(pwd)
             popup.destroy()
 
         def _cancel():
-            result["ok"] = False
             popup.destroy()
+        tk.Button(
+            popup,
+            text="Enregistrer",
+            font=F_BODY,
+            fg=TEXT,
+            bg=SUCCESS,
+            activeforeground=TEXT,
+            activebackground="#00a381",
+            relief="flat",
+            bd=0,
+            pady=8,
+            cursor="hand2",
+            command=_save,
+        ).pack(fill="x", padx=20, pady=(14, 6))
 
-        tk.Button(popup, text="Enregistrer", font=F_BODY, fg=TEXT, bg=SUCCESS,
-                  activeforeground=TEXT, activebackground="#00a381", relief="flat",
-                  bd=0, pady=8, cursor="hand2", command=_save).pack(fill="x", padx=20, pady=(14, 6))
-
-        tk.Button(popup, text="Quitter", font=F_BODY, fg=MUTED, bg=BG2,
-                  activeforeground=TEXT, activebackground=BG3, relief="flat",
-                  bd=0, pady=8, cursor="hand2", command=_cancel).pack(fill="x", padx=20)
+        tk.Button(
+            popup,
+            text="Quitter",
+            font=F_BODY,
+            fg=MUTED,
+            bg=BG2,
+            activeforeground=TEXT,
+            activebackground=BG3,
+            relief="flat",
+            bd=0,
+            pady=8,
+            cursor="hand2",
+            command=_cancel,
+        ).pack(fill="x", padx=20)
 
         popup.protocol("WM_DELETE_WINDOW", _cancel)
         popup.wait_window()
-        return result["ok"]
+        return result["vault_key"]
 
-    def _show_unlock_dialog(self) -> bool:
+    def _show_unlock_dialog(self) -> str | None:
         popup = tk.Toplevel(self, bg=BG)
         popup.title("Deverrouiller le coffre")
         popup.geometry("420x180")
         popup.resizable(False, False)
         popup.grab_set()
 
-        result = {"ok": False}
+        result: dict[str, str | None] = {"vault_key": None}
 
         tk.Label(
-            popup, text="Mot de passe", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=BG
+            popup,
+            text="Mot de passe",
+            font=("Segoe UI", 11, "bold"),
+            fg=TEXT,
+            bg=BG,
         ).pack(anchor="w", padx=20, pady=(20, 6))
 
         pwd_var = tk.StringVar()
-        entry = tk.Entry(popup, textvariable=pwd_var, show="*", font=F_BODY, fg=TEXT, bg=BG3,
-                         insertbackground=TEXT, relief="flat")
+        entry = tk.Entry(
+            popup,
+            textvariable=pwd_var,
+            show="*",
+            font=F_BODY,
+            fg=TEXT,
+            bg=BG3,
+            insertbackground=TEXT,
+            relief="flat",
+        )
         entry.pack(fill="x", padx=20, ipady=8)
         entry.focus_set()
 
@@ -140,29 +203,51 @@ class App(ROOT_CLASS):
         status.pack(anchor="w", padx=20, pady=(8, 0))
 
         def _unlock():
-            if self._auth.verify_password(pwd_var.get()):
-                result["ok"] = True
+            pwd = pwd_var.get()
+            if self._auth.verify_password(pwd):
+                result["vault_key"] = self._auth.get_vault_key(pwd)
                 popup.destroy()
             else:
                 status.config(text="Mot de passe incorrect.")
 
         def _cancel():
-            result["ok"] = False
             popup.destroy()
+        tk.Button(
+            popup,
+            text="Ouvrir",
+            font=F_BODY,
+            fg=TEXT,
+            bg=ACCENT,
+            activeforeground=TEXT,
+            activebackground="#c0392b",
+            relief="flat",
+            bd=0,
+            pady=8,
+            cursor="hand2",
+            command=_unlock,
+        ).pack(fill="x", padx=20, pady=(12, 6))
 
-        tk.Button(popup, text="Ouvrir", font=F_BODY, fg=TEXT, bg=ACCENT,
-                  activeforeground=TEXT, activebackground="#c0392b", relief="flat",
-                  bd=0, pady=8, cursor="hand2", command=_unlock).pack(fill="x", padx=20, pady=(12, 6))
-
-        tk.Button(popup, text="Quitter", font=F_BODY, fg=MUTED, bg=BG2,
-                  activeforeground=TEXT, activebackground=BG3, relief="flat",
-                  bd=0, pady=8, cursor="hand2", command=_cancel).pack(fill="x", padx=20)
+        tk.Button(
+            popup,
+            text="Quitter",
+            font=F_BODY,
+            fg=MUTED,
+            bg=BG2,
+            activeforeground=TEXT,
+            activebackground=BG3,
+            relief="flat",
+            bd=0,
+            pady=8,
+            cursor="hand2",
+            command=_cancel,
+        ).pack(fill="x", padx=20)
 
         entry.bind("<Return>", lambda _e: _unlock())
         popup.protocol("WM_DELETE_WINDOW", _cancel)
         popup.wait_window()
-        return result["ok"]
+        return result["vault_key"]
 
+    # ── UI Construction ───────────────────────────────────────────────────────
     # ── UI Construction ───────────────────────────────────────────────────────
 
     def _build_ui(self):
@@ -202,7 +287,21 @@ class App(ROOT_CLASS):
         # Footer
         ftr = tk.Frame(self, bg=BG3, pady=8)
         ftr.pack(side="bottom", fill="x")
-        tk.Label(ftr, text="Made With ❤️ by Lux_", font=F_SMALL, fg=MUTED, bg=BG3).pack()
+        tk.Label(ftr, text="Made With ❤️ by Lux_", font=F_SMALL, fg=MUTED, bg=BG3).pack(side="left", padx=10)
+        self._update_btn = tk.Button(
+            ftr,
+            text="Verifier les MAJ",
+            font=F_SMALL,
+            fg=MUTED,
+            bg=BG3,
+            activeforeground=TEXT,
+            activebackground=BG2,
+            relief="flat",
+            bd=0,
+            cursor="hand2",
+            command=self._check_updates_manual,
+        )
+        self._update_btn.pack(side="right", padx=10)
 
     def _tab_btn(self, parent, text: str, cmd) -> tk.Button:
         return tk.Button(
@@ -778,6 +877,105 @@ class App(ROOT_CLASS):
                   command=_confirm).pack(fill="x", padx=24, pady=(8, 0))
 
         entry.bind("<Return>", lambda _: _confirm())
+
+    # ── Updates ───────────────────────────────────────────────────────────────
+
+    def _check_updates_manual(self):
+        self._start_update_check(silent=False)
+
+    def _check_updates_silent(self):
+        self._start_update_check(silent=True)
+
+    def _start_update_check(self, *, silent: bool):
+        if self._is_checking_update:
+            return
+
+        self._is_checking_update = True
+        if hasattr(self, "_update_btn"):
+            self._update_btn.config(state="disabled", text="Verification...")
+
+        def worker():
+            result = self._updater.check_for_updates()
+            self.after(0, lambda: self._on_update_check_done(result, silent=silent))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_update_check_done(self, result, *, silent: bool):
+        self._is_checking_update = False
+        if hasattr(self, "_update_btn"):
+            self._update_btn.config(state="normal", text="Verifier les MAJ")
+
+        if result.error:
+            if not silent:
+                messagebox.showerror("Mise a jour", result.error)
+            return
+
+        if not result.update_available:
+            if not silent:
+                messagebox.showinfo("Mise a jour", result.message)
+            return
+
+        asset = result.asset
+        if asset is None:
+            if not silent:
+                messagebox.showinfo("Mise a jour", result.message)
+            return
+
+        notes = (result.release_notes or "").strip()
+        if len(notes) > 350:
+            notes = notes[:350].rstrip() + "..."
+
+        prompt = (
+            f"Une nouvelle version est disponible: {result.latest_version}\n\n"
+            f"Fichier compatible detecte: {asset.name}\n"
+            f"Taille: {asset.size // 1024} Ko\n"
+        )
+        if notes:
+            prompt += f"\nNotes:\n{notes}\n"
+        prompt += "\nVoulez-vous telecharger cette mise a jour maintenant ?"
+
+        if messagebox.askyesno("Mise a jour disponible", prompt):
+            self._download_update_asset(asset, result.latest_version or "")
+
+    def _download_update_asset(self, asset, version_label: str):
+        if hasattr(self, "_update_btn"):
+            self._update_btn.config(state="disabled", text="Telechargement...")
+
+        def worker():
+            try:
+                downloaded = self._updater.download_asset(asset)
+                self.after(0, lambda: self._on_update_download_done(downloaded, version_label))
+            except Exception as exc:
+                self.after(0, lambda: messagebox.showerror("Mise a jour", f"Echec du telechargement: {exc}"))
+            finally:
+                self.after(0, self._reset_update_button)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_update_download_done(self, downloaded_path: Path, version_label: str):
+        msg = (
+            f"Version {version_label} telechargee.\n\n"
+            f"Fichier: {downloaded_path}\n\n"
+            "Ouvrir le fichier maintenant ?"
+        )
+        if messagebox.askyesno("Mise a jour telechargee", msg):
+            self._open_downloaded_file(downloaded_path)
+
+    def _reset_update_button(self):
+        if hasattr(self, "_update_btn"):
+            self._update_btn.config(state="normal", text="Verifier les MAJ")
+
+    def _open_downloaded_file(self, path: Path):
+        try:
+            if os.name == "nt":
+                os.startfile(str(path))
+                return
+            if sys.platform == "darwin":
+                subprocess.Popen(["open", str(path)])
+                return
+            subprocess.Popen(["xdg-open", str(path)])
+        except Exception as exc:
+            messagebox.showerror("Mise a jour", f"Impossible d'ouvrir le fichier: {exc}")
 
 
 if __name__ == "__main__":

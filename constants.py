@@ -16,3 +16,13 @@ F_TITLE = ("Segoe UI", 20, "bold")
 F_BODY  = ("Segoe UI", 11)
 F_SMALL = ("Segoe UI", 9)
 F_MONO  = ("Consolas", 10)
+
+# ─── Application / Updates ───────────────────────────────────────────────────
+
+# Version locale de l'application (semver conseille).
+APP_VERSION = "1.0.1"
+
+# Depot GitHub au format "owner/repo" utilise pour verifier les releases.
+# Adapte cette valeur a ton depot reel si necessaire.
+GITHUB_REPO = "luxinenglish/Encryption_systeme"
+
