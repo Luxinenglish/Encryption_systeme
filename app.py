@@ -4,6 +4,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
 
+
 from constants import (
     ACCENT, BG, BG2, BG3, ERROR, MUTED, SUCCESS, TEXT,
     F_BODY, F_MONO, F_SMALL, F_TITLE,
@@ -14,6 +15,7 @@ from crypto import (
     encrypt_file, encrypt_folder,
 )
 from key_manager import KeyManager
+from auth_manager import AuthManager
 from widgets import DND_AVAILABLE, ROOT_CLASS, DropZone, action_btn, ghost_btn
 
 
@@ -25,9 +27,15 @@ class App(ROOT_CLASS):
         self.minsize(600, 520)
         self.configure(bg=BG)
         self._set_icon()
+        self._auth = AuthManager()
+        if not self._require_access_password():
+            self.destroy()
+            return
         self._km = KeyManager()
         self._build_ui()
         self.bind("<Configure>", self._on_resize)
+
+
 
     # ── Icon ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +45,123 @@ class App(ROOT_CLASS):
             icon = tk.PhotoImage(file=str(icon_path))
             self.iconphoto(True, icon)
             self._icon = icon  # keep a reference to prevent garbage collection
+
+    # ── Access password ──────────────────────────────────────────────────────────────────
+
+    def _require_access_password(self) -> bool:
+        if not self._auth.is_configured():
+            messagebox.showinfo(
+                "Premiere utilisation",
+                "Definis un mot de passe pour proteger l'acces au coffre."
+            )
+            return self._show_setup_password_dialog()
+        return self._show_unlock_dialog()
+
+    def _show_setup_password_dialog(self) -> bool:
+        popup = tk.Toplevel(self, bg=BG)
+        popup.title("Configurer le mot de passe")
+        popup.geometry("420x250")
+        popup.resizable(False, False)
+        popup.grab_set()
+
+        result = {"ok": False}
+
+        tk.Label(
+            popup, text="Nouveau mot de passe", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=BG
+        ).pack(anchor="w", padx=20, pady=(20, 6))
+
+        pwd_var = tk.StringVar()
+        pwd2_var = tk.StringVar()
+
+        tk.Entry(popup, textvariable=pwd_var, show="*", font=F_BODY, fg=TEXT, bg=BG3,
+                 insertbackground=TEXT, relief="flat").pack(fill="x", padx=20, ipady=8)
+
+        tk.Label(
+            popup, text="Confirmer le mot de passe", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=BG
+        ).pack(anchor="w", padx=20, pady=(14, 6))
+
+        tk.Entry(popup, textvariable=pwd2_var, show="*", font=F_BODY, fg=TEXT, bg=BG3,
+                 insertbackground=TEXT, relief="flat").pack(fill="x", padx=20, ipady=8)
+
+        status = tk.Label(popup, text="", font=F_SMALL, fg=ERROR, bg=BG)
+        status.pack(anchor="w", padx=20, pady=(8, 0))
+
+        def _save():
+            pwd = pwd_var.get()
+            pwd2 = pwd2_var.get()
+
+            if len(pwd) < 8:
+                status.config(text="Le mot de passe doit faire au moins 8 caracteres.")
+                return
+            if pwd != pwd2:
+                status.config(text="Les mots de passe ne correspondent pas.")
+                return
+
+            self._auth.setup_password(pwd)
+            result["ok"] = True
+            popup.destroy()
+
+        def _cancel():
+            result["ok"] = False
+            popup.destroy()
+
+        tk.Button(popup, text="Enregistrer", font=F_BODY, fg=TEXT, bg=SUCCESS,
+                  activeforeground=TEXT, activebackground="#00a381", relief="flat",
+                  bd=0, pady=8, cursor="hand2", command=_save).pack(fill="x", padx=20, pady=(14, 6))
+
+        tk.Button(popup, text="Quitter", font=F_BODY, fg=MUTED, bg=BG2,
+                  activeforeground=TEXT, activebackground=BG3, relief="flat",
+                  bd=0, pady=8, cursor="hand2", command=_cancel).pack(fill="x", padx=20)
+
+        popup.protocol("WM_DELETE_WINDOW", _cancel)
+        popup.wait_window()
+        return result["ok"]
+
+    def _show_unlock_dialog(self) -> bool:
+        popup = tk.Toplevel(self, bg=BG)
+        popup.title("Deverrouiller le coffre")
+        popup.geometry("420x180")
+        popup.resizable(False, False)
+        popup.grab_set()
+
+        result = {"ok": False}
+
+        tk.Label(
+            popup, text="Mot de passe", font=("Segoe UI", 11, "bold"), fg=TEXT, bg=BG
+        ).pack(anchor="w", padx=20, pady=(20, 6))
+
+        pwd_var = tk.StringVar()
+        entry = tk.Entry(popup, textvariable=pwd_var, show="*", font=F_BODY, fg=TEXT, bg=BG3,
+                         insertbackground=TEXT, relief="flat")
+        entry.pack(fill="x", padx=20, ipady=8)
+        entry.focus_set()
+
+        status = tk.Label(popup, text="", font=F_SMALL, fg=ERROR, bg=BG)
+        status.pack(anchor="w", padx=20, pady=(8, 0))
+
+        def _unlock():
+            if self._auth.verify_password(pwd_var.get()):
+                result["ok"] = True
+                popup.destroy()
+            else:
+                status.config(text="Mot de passe incorrect.")
+
+        def _cancel():
+            result["ok"] = False
+            popup.destroy()
+
+        tk.Button(popup, text="Ouvrir", font=F_BODY, fg=TEXT, bg=ACCENT,
+                  activeforeground=TEXT, activebackground="#c0392b", relief="flat",
+                  bd=0, pady=8, cursor="hand2", command=_unlock).pack(fill="x", padx=20, pady=(12, 6))
+
+        tk.Button(popup, text="Quitter", font=F_BODY, fg=MUTED, bg=BG2,
+                  activeforeground=TEXT, activebackground=BG3, relief="flat",
+                  bd=0, pady=8, cursor="hand2", command=_cancel).pack(fill="x", padx=20)
+
+        entry.bind("<Return>", lambda _e: _unlock())
+        popup.protocol("WM_DELETE_WINDOW", _cancel)
+        popup.wait_window()
+        return result["ok"]
 
     # ── UI Construction ───────────────────────────────────────────────────────
 
