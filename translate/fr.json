@@ -2,22 +2,22 @@
   "app": {
     "title": "Encryption System",
     "subtitle": "Fernet · AES-128-CBC + HMAC-SHA256",
-    "footer": "Made With ❤️ by Lux_"
+    "footer": "Fait avec ❤️ par Lux_"
   },
   "tabs": {
-    "encrypt": "🔒  Encrypt",
-    "decrypt": "🔓  Decrypt",
-    "keys": "🗝️  My Keys"
+    "encrypt": "🔒  Chiffrer",
+    "decrypt": "🔓  Déchiffrer",
+    "keys": "🗝️  Mes clés"
   },
   "auth": {
-    "first_use_title": "Premiere utilisation",
-    "first_use_msg": "Definis un mot de passe pour proteger l'acces au coffre.",
+    "first_use_title": "Première utilisation",
+    "first_use_msg": "Définis un mot de passe pour protéger l'accès au coffre.",
     "setup_password_title": "Configurer le mot de passe",
     "new_password": "Nouveau mot de passe",
     "confirm_password": "Confirmer le mot de passe",
-    "unlock_title": "Deverrouiller le coffre",
+    "unlock_title": "Déverrouiller le coffre",
     "password": "Mot de passe",
-    "error_password_too_short": "Le mot de passe doit faire au moins 8 caracteres.",
+    "error_password_too_short": "Le mot de passe doit faire au moins 8 caractères.",
     "error_passwords_mismatch": "Les mots de passe ne correspondent pas.",
     "error_incorrect_password": "Mot de passe incorrect.",
     "btn_save": "Enregistrer",
@@ -25,48 +25,76 @@
     "btn_quit": "Quitter"
   },
   "encrypt": {
-    "title": "Select a folder to encrypt",
-    "btn_browse": "📂  Or browse a folder",
-    "algorithm_label": "Algorithm",
-    "btn_encrypt": "🔒  Encrypt",
-    "decryption_key": "Decryption key",
-    "btn_copy": "📋 Copy",
-    "btn_save": "💾 Save",
-    "key_copied_title": "Key copied",
-    "key_copied_msg": "Key copied to clipboard!\n\n⚠️  Keep it safe — without it,\nthe encrypted folder will be unrecoverable.",
-    "save_key_title": "Save key",
-    "key_name": "Key name",
-    "error_name_empty": "Name cannot be empty.",
-    "key_saved_title": "Key saved",
-    "key_saved_msg": "Key « {name} » saved in My Keys.",
-    "error_key_exists": "« {name} » already exists — choose another name.",
-    "btn_encrypt_another": "↩  Encrypt another file or folder",
-    "warning_no_file": "Please first select a file or folder.",
-    "encrypting": "Encrypting…",
-    "success_msg": "✅  {count} file(s) encrypted\n{icon}  {path}"
+    "title": "Sélectionne un dossier à chiffrer",
+    "btn_browse": "📂  Ou parcourir un dossier",
+    "algorithm_label": "Algorithme",
+    "btn_encrypt": "🔒  Chiffrer",
+    "decryption_key": "Clé de déchiffrement",
+    "btn_copy": "📋 Copier",
+    "btn_save": "💾 Enregistrer",
+    "key_copied_title": "Clé copiée",
+    "key_copied_msg": "Clé copiée dans le presse-papiers !\n\n⚠️  Garde-la en lieu sûr — sans elle,\nle dossier chiffré sera irrécupérable.",
+    "save_key_title": "Enregistrer la clé",
+    "key_name": "Nom de la clé",
+    "key_saved_title": "Clé enregistrée",
+    "key_saved_msg": "Clé « {name} » enregistrée dans Mes clés.",
+    "btn_encrypt_another": "↩  Chiffrer un autre fichier ou dossier",
+    "warning_no_file": "Sélectionne d'abord un fichier ou un dossier.",
+    "encrypting": "Chiffrement...",
+    "success_msg": "✅  {count} fichier(s) chiffré(s)\n{icon}  {path}"
   },
   "decrypt": {
-    "title": "Select an encrypted file or folder",
-    "btn_browse": "📂  Or browse a folder",
-    "decryption_key": "Decryption key",
-    "btn_choose_key": "🗝️ Choose from my keys",
-    "btn_decrypt": "🔓  Decrypt",
-    "warning_dnd": "Drag and drop not available. Use the browse button.",
-    "decrypting": "Decrypting…",
-    "success_msg": "✅  {count} file(s) decrypted\n{icon}  {path}"
+    "title": "Sélectionne un fichier ou dossier chiffré",
+    "btn_browse": "📂  Ou parcourir un dossier",
+    "decryption_key": "Clé de déchiffrement",
+    "btn_choose_key": "🗝️ Choisir depuis Mes clés",
+    "btn_decrypt": "🔓  Déchiffrer",
+    "warning_dnd": "Glisser-déposer indisponible. Utilise le bouton Parcourir.",
+    "warning_no_file": "Sélectionne d'abord un fichier ou dossier chiffré.",
+    "warning_no_key": "Saisis la clé de déchiffrement.",
+    "decrypting": "Déchiffrement...",
+    "success_msg": "✅  {count} fichier(s) déchiffré(s)\n{icon}  {path}",
+    "choose_key_title": "Choisir une clé",
+    "choose_key_label": "Sélectionne une clé enregistrée"
   },
   "keys": {
-    "title": "My Keys",
-    "empty": "No keys saved yet.",
-    "btn_new": "➕ Create new key",
-    "btn_delete": "🗑  Delete",
-    "btn_view": "👁️  View",
-    "col_name": "Name",
-    "col_path": "Path",
-    "col_algo": "Algorithm"
+    "saved_title": "Clés enregistrées",
+    "empty": "Aucune clé enregistrée.",
+    "empty_help": "Aucune clé enregistrée.\nChiffre un dossier puis enregistre sa clé.",
+    "btn_refresh": "⟳ Actualiser",
+    "btn_delete": "🗑 Supprimer",
+    "btn_use": "🔓 Utiliser",
+    "btn_rename": "✏️ Renommer",
+    "delete_title": "Suppression",
+    "delete_confirm": "Supprimer la clé « {name} » ?\n\nCette action est irréversible.",
+    "rename_title": "Renommer la clé",
+    "new_name": "Nouveau nom"
+  },
+  "dropzone": {
+    "placeholder": "📂📄  Dépose un dossier ou un fichier ici\n\nou clique pour parcourir",
+    "select_file": "Sélectionner un fichier",
+    "select_folder": "Sélectionner un dossier",
+    "selected_file": "✅  📄 {name}",
+    "selected_folder": "✅  📂 {name}"
   },
   "buttons": {
-    "verify_updates": "Verifier les MAJ"
+    "verify_updates": "Vérifier les MAJ"
+  },
+  "updates": {
+    "title": "Mise à jour",
+    "checking": "Vérification...",
+    "downloading": "Téléchargement...",
+    "up_to_date": "Vous êtes à jour ({version}).",
+    "error_with_reason": "Échec de la vérification des mises à jour : {reason}",
+    "no_compatible_asset": "La version {version} est disponible, mais aucun installateur compatible n'a été trouvé.",
+    "available_title": "Mise à jour disponible",
+    "available_prompt_header": "Une nouvelle version est disponible : {version}\n\n{asset_name}\nTaille : {size_kb} Ko\n",
+    "notes_block": "\nNotes de version :\n{notes}\n\nNotes complètes :\n{url}\n",
+    "download_question": "\nTélécharger cette mise à jour maintenant ?",
+    "download_failed": "Échec du téléchargement : {reason}",
+    "download_done_title": "Mise à jour téléchargée",
+    "download_done": "Version {version} téléchargée.\n\nFichier : {path}\n\nOuvrir maintenant ?",
+    "open_failed": "Impossible d'ouvrir le fichier : {reason}"
   },
   "settings": {
     "title": "⚙️  Paramètres",
@@ -78,12 +106,21 @@
     "theme_light": "Clair",
     "about": "À propos",
     "version": "Version",
-    "about_text": "Encryption System v{version}\n\nUn système de chiffrement sécurisé pour vos fichiers.\n\nDéveloppé avec ❤️ par Lux_"
+    "about_text": "Encryption System v{version}\n\nUn système de chiffrement sécurisé pour vos fichiers.\n\nDéveloppé avec ❤️ par Lux_",
+    "language_changed_title": "Langue modifiée",
+    "language_changed_msg": "La langue a été modifiée avec succès.\nRedémarre l'application pour appliquer les changements."
+  },
+  "common": {
+    "confirm": "Confirmer",
+    "name_empty": "Le nom ne peut pas être vide.",
+    "already_exists": "« {name} » existe déjà.",
+    "copied_short": "Clé copiée dans le presse-papiers.",
+    "status_error": "❌  {msg}"
   },
   "errors": {
-    "error": "Error",
-    "warning": "Warning",
-    "drag_invalid": "Please drop a valid file or folder."
+    "error": "Erreur",
+    "warning": "Attention",
+    "drag_invalid": "Dépose un fichier ou dossier valide."
   }
 }
 
