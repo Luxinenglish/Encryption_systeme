@@ -20,12 +20,18 @@ from key_manager import KeyManager
 from auth_manager import AuthManager
 from updater import UpdateService
 from widgets import DND_AVAILABLE, ROOT_CLASS, DropZone, action_btn, ghost_btn
+from translator import t, init_translator, set_language
+from config_manager import get_config
 
 
 class App(ROOT_CLASS):
     def __init__(self):
         super().__init__()
-        self.title("Encryption System")
+        # Initialize translator and config
+        self._config = get_config()
+        init_translator(self._config.get_language())
+        
+        self.title(t("app.title", "Encryption System"))
         self.geometry("700x620")
         self.minsize(600, 520)
         self.configure(bg=BG)
@@ -47,26 +53,39 @@ class App(ROOT_CLASS):
     # ── Icon ──────────────────────────────────────────────────────────────────
 
     def _set_icon(self):
-        icon_path = Path(__file__).parent / "img" / "logo.png"
-        if icon_path.exists():
-            icon = tk.PhotoImage(file=str(icon_path))
-            self.iconphoto(True, icon)
-            self._icon = icon  # keep a reference to prevent garbage collection
+        """Set the application window icon."""
+        try:
+            # Handle both development and PyInstaller bundled versions
+            if getattr(sys, 'frozen', False):
+                # Running as a bundled executable (PyInstaller)
+                base_path = Path(sys._MEIPASS)
+            else:
+                # Running as a script
+                base_path = Path(__file__).parent
+            
+            icon_path = base_path / "img" / "logo.png"
+            if icon_path.exists():
+                icon = tk.PhotoImage(file=str(icon_path))
+                self.iconphoto(True, icon)
+                self._icon = icon  # keep a reference to prevent garbage collection
+        except Exception as e:
+            # Silently fail if icon cannot be loaded
+            print(f"Warning: Could not load icon: {e}")
 
     # ── Access password ───────────────────────────────────────────────────────
 
     def _require_access_password(self) -> str | None:
         if not self._auth.is_configured():
             messagebox.showinfo(
-                "Premiere utilisation",
-                "Definis un mot de passe pour proteger l'acces au coffre."
+                t("auth.first_use_title", "First use"),
+                t("auth.first_use_msg", "Set a password to protect access to the vault."),
             )
             return self._show_setup_password_dialog()
         return self._show_unlock_dialog( )
 
     def _show_setup_password_dialog(self) -> str | None:
         popup = tk.Toplevel(self, bg=BG)
-        popup.title("Configurer le mot de passe")
+        popup.title(t("auth.setup_password_title", "Set up password"))
         popup.geometry("420x250")
         popup.resizable(False, False)
         popup.grab_set()
@@ -75,7 +94,7 @@ class App(ROOT_CLASS):
 
         tk.Label(
             popup,
-            text="Nouveau mot de passe",
+            text=t("auth.new_password", "New password"),
             font=("Segoe UI", 11, "bold"),
             fg=TEXT,
             bg=BG,
@@ -97,7 +116,7 @@ class App(ROOT_CLASS):
 
         tk.Label(
             popup,
-            text="Confirmer le mot de passe",
+            text=t("auth.confirm_password", "Confirm password"),
             font=("Segoe UI", 11, "bold"),
             fg=TEXT,
             bg=BG,
@@ -122,10 +141,10 @@ class App(ROOT_CLASS):
             pwd2 = pwd2_var.get()
 
             if len(pwd) < 8:
-                status.config(text="Le mot de passe doit faire au moins 8 caracteres.")
+                status.config(text=t("auth.error_password_too_short", "Password must be at least 8 characters."))
                 return
             if pwd != pwd2:
-                status.config(text="Les mots de passe ne correspondent pas.")
+                status.config(text=t("auth.error_passwords_mismatch", "Passwords do not match."))
                 return
 
             self._auth.setup_password(pwd)
@@ -136,7 +155,7 @@ class App(ROOT_CLASS):
             popup.destroy()
         tk.Button(
             popup,
-            text="Enregistrer",
+            text=t("auth.btn_save", "Save"),
             font=F_BODY,
             fg=TEXT,
             bg=SUCCESS,
@@ -151,7 +170,7 @@ class App(ROOT_CLASS):
 
         tk.Button(
             popup,
-            text="Quitter",
+            text=t("auth.btn_quit", "Quit"),
             font=F_BODY,
             fg=MUTED,
             bg=BG2,
@@ -170,7 +189,7 @@ class App(ROOT_CLASS):
 
     def _show_unlock_dialog(self) -> str | None:
         popup = tk.Toplevel(self, bg=BG)
-        popup.title("Deverrouiller le coffre")
+        popup.title(t("auth.unlock_title", "Unlock vault"))
         popup.geometry("420x180")
         popup.resizable(False, False)
         popup.grab_set()
@@ -179,7 +198,7 @@ class App(ROOT_CLASS):
 
         tk.Label(
             popup,
-            text="Mot de passe",
+            text=t("auth.password", "Password"),
             font=("Segoe UI", 11, "bold"),
             fg=TEXT,
             bg=BG,
@@ -208,13 +227,13 @@ class App(ROOT_CLASS):
                 result["vault_key"] = self._auth.get_vault_key(pwd)
                 popup.destroy()
             else:
-                status.config(text="Mot de passe incorrect.")
+                status.config(text=t("auth.error_incorrect_password", "Incorrect password."))
 
         def _cancel():
             popup.destroy()
         tk.Button(
             popup,
-            text="Ouvrir",
+            text=t("auth.btn_unlock", "Unlock"),
             font=F_BODY,
             fg=TEXT,
             bg=ACCENT,
@@ -229,7 +248,7 @@ class App(ROOT_CLASS):
 
         tk.Button(
             popup,
-            text="Quitter",
+            text=t("auth.btn_quit", "Quit"),
             font=F_BODY,
             fg=MUTED,
             bg=BG2,
@@ -254,18 +273,20 @@ class App(ROOT_CLASS):
         # Header
         hdr = tk.Frame(self, bg=BG3, pady=16)
         hdr.pack(fill="x")
-        tk.Label(hdr, text="Encryption System", font=F_TITLE, fg=TEXT, bg=BG3).pack()
-        tk.Label(hdr, text="Fernet · AES-128-CBC + HMAC-SHA256", font=F_SMALL, fg=MUTED, bg=BG3).pack()
+        tk.Label(hdr, text=t("app.title", "Encryption System"), font=F_TITLE, fg=TEXT, bg=BG3).pack()
+        tk.Label(hdr, text=t("app.subtitle", "Fernet · AES-128-CBC + HMAC-SHA256"), font=F_SMALL, fg=MUTED, bg=BG3).pack()
 
         # Tab bar
         bar = tk.Frame(self, bg=BG2)
         bar.pack(fill="x")
-        self._btn_enc  = self._tab_btn(bar, "🔒  Encrypt",  lambda: self._show("enc"))
-        self._btn_dec  = self._tab_btn(bar, "🔓  Decrypt",  lambda: self._show("dec"))
-        self._btn_keys = self._tab_btn(bar, "🗝️  My Keys",  lambda: self._show("keys"))
+        self._btn_enc  = self._tab_btn(bar, t("tabs.encrypt", "🔒  Encrypt"), lambda: self._show("enc"))
+        self._btn_dec  = self._tab_btn(bar, t("tabs.decrypt", "🔓  Decrypt"), lambda: self._show("dec"))
+        self._btn_keys = self._tab_btn(bar, t("tabs.keys", "🗝️  My Keys"), lambda: self._show("keys"))
+        self._btn_settings = self._tab_btn(bar, t("settings.title", "⚙️  Settings"), lambda: self._show("settings"))
         self._btn_enc.pack(side="left", fill="x", expand=True)
         self._btn_dec.pack(side="left", fill="x", expand=True)
         self._btn_keys.pack(side="left", fill="x", expand=True)
+        self._btn_settings.pack(side="left", fill="x", expand=True)
 
         # Panels
         self._panes: dict[str, tk.Frame] = {}
@@ -282,15 +303,19 @@ class App(ROOT_CLASS):
         self._panes["keys"] = keys
         self._build_keys_pane(keys)
 
+        settings = tk.Frame(self, bg=BG)
+        self._panes["settings"] = settings
+        self._build_settings_pane(settings)
+
         self._show("enc")
 
         # Footer
         ftr = tk.Frame(self, bg=BG3, pady=8)
         ftr.pack(side="bottom", fill="x")
-        tk.Label(ftr, text="Made With ❤️ by Lux_", font=F_SMALL, fg=MUTED, bg=BG3).pack(side="left", padx=10)
+        tk.Label(ftr, text=t("app.footer", "Made With ❤️ by Lux_"), font=F_SMALL, fg=MUTED, bg=BG3).pack(side="left", padx=10)
         self._update_btn = tk.Button(
             ftr,
-            text="Verifier les MAJ",
+            text=t("buttons.verify_updates"),
             font=F_SMALL,
             fg=MUTED,
             bg=BG3,
@@ -332,23 +357,24 @@ class App(ROOT_CLASS):
         self._btn_enc.config( bg=ACCENT if tab == "enc"  else BG2, fg=TEXT if tab == "enc"  else MUTED)
         self._btn_dec.config( bg=ACCENT if tab == "dec"  else BG2, fg=TEXT if tab == "dec"  else MUTED)
         self._btn_keys.config(bg=ACCENT if tab == "keys" else BG2, fg=TEXT if tab == "keys" else MUTED)
+        self._btn_settings.config(bg=ACCENT if tab == "settings" else BG2, fg=TEXT if tab == "settings" else MUTED)
         if tab == "keys":
             self._refresh_keys()
 
     # ── Encryption Tab ────────────────────────────────────────────────────────
 
     def _build_encrypt_pane(self, parent: tk.Frame):
-        tk.Label(parent, text="Select a folder to encrypt",
+        tk.Label(parent, text=t("encrypt.title", "Select a folder to encrypt"),
                  font=F_BODY, fg=MUTED, bg=BG).pack(anchor="w", pady=(0, 8))
 
         self._enc_drop = DropZone(parent, height=150)
         self._enc_drop.pack(fill="x", pady=(0, 4))
-        ghost_btn(parent, "📂  Or browse a folder", self._enc_drop.browse_folder).pack(
+        ghost_btn(parent, t("encrypt.btn_browse", "📂  Or browse a folder"), self._enc_drop.browse_folder).pack(
             anchor="w", pady=(0, 12)
         )
 
         # Algorithm selector
-        tk.Label(parent, text="Algorithm", font=("Segoe UI", 10, "bold"),
+        tk.Label(parent, text=t("encrypt.algorithm_label", "Algorithm"), font=("Segoe UI", 10, "bold"),
                  fg=MUTED, bg=BG).pack(anchor="w", pady=(0, 6))
 
         self._algo_var = tk.StringVar(value=ALGO_FERNET)
@@ -370,13 +396,13 @@ class App(ROOT_CLASS):
                 cursor="hand2",
             ).pack(side="left", padx=(0, 20))
 
-        self._enc_go = action_btn(parent, "🔒  Encrypt", self._do_encrypt)
+        self._enc_go = action_btn(parent, t("encrypt.btn_encrypt", "🔒  Encrypt"), self._do_encrypt)
         self._enc_go.pack(fill="x", pady=(0, 16))
 
         # Result zone (hidden initially)
         self._enc_result = tk.Frame(parent, bg=BG)
 
-        tk.Label(self._enc_result, text="Decryption key",
+        tk.Label(self._enc_result, text=t("encrypt.decryption_key", "Decryption key"),
                  font=("Segoe UI", 10, "bold"), fg=MUTED, bg=BG).pack(anchor="w")
 
         key_row = tk.Frame(self._enc_result, bg=BG)
@@ -397,7 +423,7 @@ class App(ROOT_CLASS):
 
         tk.Button(
             key_row,
-            text="📋 Copy",
+            text=t("encrypt.btn_copy", "📋 Copy"),
             font=F_SMALL,
             fg=TEXT,
             bg=BG3,
@@ -413,7 +439,7 @@ class App(ROOT_CLASS):
 
         tk.Button(
             key_row,
-            text="💾 Save",
+            text=t("encrypt.btn_save", "💾 Save"),
             font=F_SMALL,
             fg=TEXT,
             bg=SUCCESS,
@@ -438,16 +464,19 @@ class App(ROOT_CLASS):
         )
         self._enc_status.pack(anchor="w", pady=(10, 0))
 
-        ghost_btn(self._enc_result, "↩  Encrypt another file or folder", self._reset_encrypt).pack(
+        ghost_btn(self._enc_result, t("encrypt.btn_encrypt_another", "↩  Encrypt another file or folder"), self._reset_encrypt).pack(
             anchor="w", pady=(10, 0)
         )
 
     def _do_encrypt(self):
         path = self._enc_drop.selected_path
         if not path:
-            messagebox.showwarning("Warning", "Please first select a file or folder.")
+            messagebox.showwarning(
+                t("errors.warning", "Warning"),
+                t("encrypt.warning_no_file", "Please first select a file or folder."),
+            )
             return
-        self._enc_go.config(state="disabled", text="Encrypting…")
+        self._enc_go.config(state="disabled", text=t("encrypt.encrypting", "Encrypting..."))
 
         algo    = self._algo_var.get()
         is_file = self._enc_drop.is_file
@@ -465,18 +494,18 @@ class App(ROOT_CLASS):
         threading.Thread(target=worker, daemon=True).start()
 
     def _enc_done(self, out: str, key: str, count: int, *, is_file: bool = False):
-        self._enc_go.config(state="normal", text="🔒  Encrypt")
+        self._enc_go.config(state="normal", text=t("encrypt.btn_encrypt", "🔒  Encrypt"))
         self._enc_key.set(key)
         icon = "📄" if is_file else "📁"
         self._enc_status.config(
-            text=f"✅  {count} file(s) encrypted\n{icon}  {out}",
+            text=t("encrypt.success_msg", "✅  {count} file(s) encrypted\n{icon}  {path}", count=count, icon=icon, path=out),
             fg=SUCCESS,
         )
         self._enc_result.pack(fill="x")
 
     def _enc_err(self, msg: str):
-        self._enc_go.config(state="normal", text="🔒  Encrypt")
-        messagebox.showerror("Error", msg)
+        self._enc_go.config(state="normal", text=t("encrypt.btn_encrypt", "🔒  Encrypt"))
+        messagebox.showerror(t("errors.error", "Error"), msg)
 
     def _copy_key(self):
         key = self._enc_key.get()
@@ -484,10 +513,8 @@ class App(ROOT_CLASS):
             self.clipboard_clear()
             self.clipboard_append(key)
             messagebox.showinfo(
-                "Key copied",
-                "Key copied to clipboard!\n\n"
-                "⚠️  Keep it safe — without it,\n"
-                "the encrypted folder will be unrecoverable."
+                t("encrypt.key_copied_title", "Key copied"),
+                t("encrypt.key_copied_msg", "Key copied to clipboard!"),
             )
 
     def _open_save_popup(self):
@@ -497,12 +524,12 @@ class App(ROOT_CLASS):
         folder = self._enc_drop.selected_path or ""
 
         popup = tk.Toplevel(self, bg=BG)
-        popup.title("Save key")
+        popup.title(t("encrypt.save_key_title", "Save key"))
         popup.geometry("380x190")
         popup.resizable(False, False)
         popup.grab_set()
 
-        tk.Label(popup, text="Key name", font=("Segoe UI", 12, "bold"),
+        tk.Label(popup, text=t("encrypt.key_name", "Key name"), font=("Segoe UI", 12, "bold"),
                  fg=TEXT, bg=BG).pack(pady=(20, 6))
 
         name_var = tk.StringVar(value=os.path.basename(folder))
@@ -518,16 +545,19 @@ class App(ROOT_CLASS):
         def _confirm():
             n = name_var.get().strip()
             if not n:
-                msg.config(text="Name cannot be empty.")
+                msg.config(text=t("common.name_empty", "Name cannot be empty."))
                 return
             ok = self._km.save_key(n, key, folder, self._algo_var.get())
             if ok:
                 popup.destroy()
-                messagebox.showinfo("Key saved", f"Key « {n} » saved in My Keys.")
+                messagebox.showinfo(
+                    t("encrypt.key_saved_title", "Key saved"),
+                    t("encrypt.key_saved_msg", "Key « {name} » saved in My Keys.", name=n),
+                )
             else:
-                msg.config(text=f"« {n} » already exists — choose another name.")
+                msg.config(text=t("common.already_exists", "« {name} » already exists.", name=n))
 
-        tk.Button(popup, text="💾 Save", font=("Segoe UI", 11, "bold"),
+        tk.Button(popup, text=t("encrypt.btn_save", "💾 Save"), font=("Segoe UI", 11, "bold"),
                   fg=TEXT, bg=SUCCESS, activeforeground=TEXT, activebackground="#00a381",
                   relief="flat", bd=0, pady=10, cursor="hand2",
                   command=_confirm).pack(fill="x", padx=24, pady=(8, 0))
@@ -543,22 +573,22 @@ class App(ROOT_CLASS):
     # ── Decryption Tab ────────────────────────────────────────────────────────
 
     def _build_decrypt_pane(self, parent: tk.Frame):
-        tk.Label(parent, text="Select an encrypted file or folder",
+        tk.Label(parent, text=t("decrypt.title", "Select an encrypted file or folder"),
                  font=F_BODY, fg=MUTED, bg=BG).pack(anchor="w", pady=(0, 8))
 
         self._dec_drop = DropZone(parent, height=130)
         self._dec_drop.pack(fill="x", pady=(0, 4))
-        ghost_btn(parent, "📂  Or browse a folder", self._dec_drop.browse_folder).pack(
+        ghost_btn(parent, t("decrypt.btn_browse", "📂  Or browse a folder"), self._dec_drop.browse_folder).pack(
             anchor="w", pady=(0, 12)
         )
 
         key_hdr = tk.Frame(parent, bg=BG)
         key_hdr.pack(fill="x", pady=(0, 4))
-        tk.Label(key_hdr, text="Decryption key",
+        tk.Label(key_hdr, text=t("decrypt.decryption_key", "Decryption key"),
                  font=("Segoe UI", 10, "bold"), fg=MUTED, bg=BG).pack(side="left")
         tk.Button(
             key_hdr,
-            text="🗝️ Choose from my keys",
+            text=t("decrypt.btn_choose_key", "🗝️ Choose from my keys"),
             font=F_SMALL,
             fg=ACCENT,
             bg=BG,
@@ -581,7 +611,7 @@ class App(ROOT_CLASS):
             relief="flat",
         ).pack(fill="x", ipady=8, pady=(0, 16))
 
-        self._dec_go = action_btn(parent, "🔓  Decrypt", self._do_decrypt)
+        self._dec_go = action_btn(parent, t("decrypt.btn_decrypt", "🔓  Decrypt"), self._do_decrypt)
         self._dec_go.pack(fill="x", pady=(0, 16))
 
         self._dec_status = tk.Label(
@@ -598,7 +628,7 @@ class App(ROOT_CLASS):
         if not DND_AVAILABLE:
             tk.Label(
                 parent,
-                text="ℹ️  Install tkinterdnd2 to enable drag and drop.",
+                text=t("decrypt.warning_dnd", "Drag and drop not available. Use the browse button."),
                 font=F_SMALL,
                 fg=MUTED,
                 bg=BG,
@@ -607,16 +637,19 @@ class App(ROOT_CLASS):
     def _pick_saved_key(self):
         keys = self._km.all_keys()
         if not keys:
-            messagebox.showinfo("My Keys", "No saved keys.\nFirst encrypt a folder and save its key.")
+            messagebox.showinfo(
+                t("tabs.keys", "My Keys"),
+                t("keys.empty_help", "No saved keys.\nFirst encrypt a folder and save its key."),
+            )
             return
 
         popup = tk.Toplevel(self, bg=BG)
-        popup.title("Choose a key")
+        popup.title(t("decrypt.choose_key_title", "Choose a key"))
         popup.geometry("500x360")
         popup.resizable(False, False)
         popup.grab_set()
 
-        tk.Label(popup, text="Select a saved key",
+        tk.Label(popup, text=t("decrypt.choose_key_label", "Select a saved key"),
                  font=("Segoe UI", 12, "bold"), fg=TEXT, bg=BG).pack(pady=(16, 8))
 
         frame = tk.Frame(popup, bg=BG)
@@ -650,7 +683,7 @@ class App(ROOT_CLASS):
                      anchor="w").grid(row=1, column=0, sticky="w")
             tk.Label(row, text=k["date"], font=F_SMALL, fg=MUTED, bg=BG2,
                      anchor="e").grid(row=0, column=1, sticky="e", padx=(12, 0))
-            tk.Button(row, text="Use", font=F_SMALL, fg=TEXT, bg=ACCENT,
+            tk.Button(row, text=t("keys.btn_use", "Use"), font=F_SMALL, fg=TEXT, bg=ACCENT,
                       activeforeground=TEXT, activebackground="#c0392b",
                       relief="flat", bd=0, padx=8, pady=4, cursor="hand2",
                       command=_choose).grid(row=1, column=1, sticky="e", padx=(12, 0))
@@ -664,13 +697,19 @@ class App(ROOT_CLASS):
         path = self._dec_drop.selected_path
         key  = self._dec_key.get().strip()
         if not path:
-            messagebox.showwarning("Warning", "Please first select an encrypted file or folder.")
+            messagebox.showwarning(
+                t("errors.warning", "Warning"),
+                t("decrypt.warning_no_file", "Please first select an encrypted file or folder."),
+            )
             return
         if not key:
-            messagebox.showwarning("Warning", "Please enter the decryption key.")
+            messagebox.showwarning(
+                t("errors.warning", "Warning"),
+                t("decrypt.warning_no_key", "Please enter the decryption key."),
+            )
             return
 
-        self._dec_go.config(state="disabled", text="Decrypting…")
+        self._dec_go.config(state="disabled", text=t("decrypt.decrypting", "Decrypting..."))
 
         is_file = self._dec_drop.is_file
 
@@ -687,25 +726,25 @@ class App(ROOT_CLASS):
         threading.Thread(target=worker, daemon=True).start()
 
     def _dec_done(self, out: str, count: int, *, is_file: bool = False):
-        self._dec_go.config(state="normal", text="🔓  Decrypt")
+        self._dec_go.config(state="normal", text=t("decrypt.btn_decrypt", "🔓  Decrypt"))
         icon = "📄" if is_file else "📁"
         self._dec_status.config(
-            text=f"✅  {count} file(s) decrypted\n{icon}  {out}",
+            text=t("decrypt.success_msg", "✅  {count} file(s) decrypted\n{icon}  {path}", count=count, icon=icon, path=out),
             fg=SUCCESS,
         )
 
     def _dec_err(self, msg: str):
-        self._dec_go.config(state="normal", text="🔓  Decrypt")
-        self._dec_status.config(text=f"❌  {msg}", fg=ERROR)
+        self._dec_go.config(state="normal", text=t("decrypt.btn_decrypt", "🔓  Decrypt"))
+        self._dec_status.config(text=t("common.status_error", "❌  {msg}", msg=msg), fg=ERROR)
 
     # ── Key Management Tab ────────────────────────────────────────────────────
 
     def _build_keys_pane(self, parent: tk.Frame):
         hdr = tk.Frame(parent, bg=BG)
         hdr.pack(fill="x", pady=(0, 12))
-        tk.Label(hdr, text="Saved keys", font=("Segoe UI", 13, "bold"),
+        tk.Label(hdr, text=t("keys.saved_title", "Saved keys"), font=("Segoe UI", 13, "bold"),
                  fg=TEXT, bg=BG).pack(side="left")
-        tk.Button(hdr, text="⟳ Refresh", font=F_SMALL, fg=MUTED, bg=BG,
+        tk.Button(hdr, text=t("keys.btn_refresh", "⟳ Refresh"), font=F_SMALL, fg=MUTED, bg=BG,
                   activeforeground=TEXT, activebackground=BG2, relief="flat", bd=0,
                   cursor="hand2", command=self._refresh_keys).pack(side="right")
 
@@ -729,7 +768,7 @@ class App(ROOT_CLASS):
 
         self._empty_label = tk.Label(
             self._keys_inner,
-            text="No saved keys.\nEncrypt a folder and save its key.",
+            text=t("keys.empty_help", "No saved keys.\nEncrypt a folder and save its key."),
             font=F_BODY, fg=MUTED, bg=BG, justify="center",
         )
 
@@ -744,7 +783,7 @@ class App(ROOT_CLASS):
         if not keys:
             self._empty_label = tk.Label(
                 self._keys_inner,
-                text="No saved keys.\nEncrypt a folder and save its key.",
+                text=t("keys.empty_help", "No saved keys.\nEncrypt a folder and save its key."),
                 font=F_BODY,
                 fg=MUTED,
                 bg=BG,
@@ -806,22 +845,22 @@ class App(ROOT_CLASS):
                   relief="flat", bd=0, padx=6, pady=5, cursor="hand2",
                   command=_toggle).pack(side="left", padx=(0, 4))
 
-        tk.Button(bottom, text="📋 Copy", font=F_SMALL, fg=TEXT, bg=BG3,
+        tk.Button(bottom, text=t("encrypt.btn_copy", "📋 Copy"), font=F_SMALL, fg=TEXT, bg=BG3,
                   activeforeground=TEXT, activebackground=ACCENT,
                   relief="flat", bd=0, padx=8, pady=5, cursor="hand2",
                   command=lambda kv=k["key"]: self._copy_saved(kv)).pack(side="left", padx=(0, 4))
 
-        tk.Button(bottom, text="🔓 Use", font=F_SMALL, fg=TEXT, bg=BG3,
+        tk.Button(bottom, text=t("keys.btn_use", "🔓 Use"), font=F_SMALL, fg=TEXT, bg=BG3,
                   activeforeground=TEXT, activebackground=SUCCESS,
                   relief="flat", bd=0, padx=8, pady=5, cursor="hand2",
                   command=lambda kv=k["key"]: self._use_key(kv)).pack(side="left", padx=(0, 4))
 
-        tk.Button(bottom, text="✏️ Rename", font=F_SMALL, fg=MUTED, bg=BG2,
+        tk.Button(bottom, text=t("keys.btn_rename", "✏️ Rename"), font=F_SMALL, fg=MUTED, bg=BG2,
                   activeforeground=TEXT, activebackground=BG3,
                   relief="flat", bd=0, padx=6, pady=5, cursor="hand2",
                   command=lambda name=k["name"]: self._rename_key(name)).pack(side="right", padx=(4, 0))
 
-        tk.Button(bottom, text="🗑 Delete", font=F_SMALL, fg=ERROR, bg=BG2,
+        tk.Button(bottom, text=t("keys.btn_delete", "🗑 Delete"), font=F_SMALL, fg=ERROR, bg=BG2,
                   activeforeground=TEXT, activebackground="#5a1a1a",
                   relief="flat", bd=0, padx=6, pady=5, cursor="hand2",
                   command=lambda name=k["name"]: self._delete_key(name)).pack(side="right", padx=(4, 0))
@@ -829,25 +868,31 @@ class App(ROOT_CLASS):
     def _copy_saved(self, key: str):
         self.clipboard_clear()
         self.clipboard_append(key)
-        messagebox.showinfo("Key copied", "Key copied to clipboard.")
+        messagebox.showinfo(
+            t("encrypt.key_copied_title", "Key copied"),
+            t("common.copied_short", "Key copied to clipboard."),
+        )
 
     def _use_key(self, key: str):
         self._dec_key.set(key)
         self._show("dec")
 
     def _delete_key(self, name: str):
-        if messagebox.askyesno("Delete", f"Delete key « {name} »?\n\nThis action is irreversible."):
+        if messagebox.askyesno(
+            t("keys.delete_title", "Delete"),
+            t("keys.delete_confirm", "Delete key « {name} »?\n\nThis action is irreversible.", name=name),
+        ):
             self._km.delete_key(name)
             self._refresh_keys()
 
     def _rename_key(self, old_name: str):
         popup = tk.Toplevel(self, bg=BG)
-        popup.title("Rename key")
+        popup.title(t("keys.rename_title", "Rename key"))
         popup.geometry("340x150")
         popup.resizable(False, False)
         popup.grab_set()
 
-        tk.Label(popup, text="New name", font=F_BODY, fg=TEXT, bg=BG).pack(pady=(20, 6))
+        tk.Label(popup, text=t("keys.new_name", "New name"), font=F_BODY, fg=TEXT, bg=BG).pack(pady=(20, 6))
 
         new_name = tk.StringVar(value=old_name)
         entry = tk.Entry(popup, textvariable=new_name, font=F_BODY, fg=TEXT, bg=BG3,
@@ -862,16 +907,16 @@ class App(ROOT_CLASS):
         def _confirm():
             n = new_name.get().strip()
             if not n:
-                msg.config(text="Name cannot be empty.")
+                msg.config(text=t("common.name_empty", "Name cannot be empty."))
                 return
             ok = self._km.rename_key(old_name, n)
             if ok:
                 popup.destroy()
                 self._refresh_keys()
             else:
-                msg.config(text=f"« {n} » already exists.")
+                msg.config(text=t("common.already_exists", "« {name} » already exists.", name=n))
 
-        tk.Button(popup, text="Confirm", font=F_BODY, fg=TEXT, bg=ACCENT,
+        tk.Button(popup, text=t("common.confirm", "Confirm"), font=F_BODY, fg=TEXT, bg=ACCENT,
                   activeforeground=TEXT, activebackground="#c0392b",
                   relief="flat", bd=0, pady=8, cursor="hand2",
                   command=_confirm).pack(fill="x", padx=24, pady=(8, 0))
@@ -892,7 +937,7 @@ class App(ROOT_CLASS):
 
         self._is_checking_update = True
         if hasattr(self, "_update_btn"):
-            self._update_btn.config(state="disabled", text="Verification...")
+            self._update_btn.config(state="disabled", text=t("updates.checking", "Checking..."))
 
         def worker():
             result = self._updater.check_for_updates()
@@ -903,67 +948,96 @@ class App(ROOT_CLASS):
     def _on_update_check_done(self, result, *, silent: bool):
         self._is_checking_update = False
         if hasattr(self, "_update_btn"):
-            self._update_btn.config(state="normal", text="Verifier les MAJ")
+            self._update_btn.config(state="normal", text=t("buttons.verify_updates", "Check for Updates"))
 
         if result.error:
             if not silent:
-                messagebox.showerror("Mise a jour", result.error)
+                messagebox.showerror(
+                    t("updates.title", "Update"),
+                    t("updates.error_with_reason", "Update check failed: {reason}", reason=result.error),
+                )
             return
 
         if not result.update_available:
             if not silent:
-                messagebox.showinfo("Mise a jour", result.message)
+                messagebox.showinfo(
+                    t("updates.title", "Update"),
+                    t("updates.up_to_date", "You are up to date ({version}).", version=APP_VERSION),
+                )
             return
 
         asset = result.asset
         if asset is None:
             if not silent:
-                messagebox.showinfo("Mise a jour", result.message)
+                messagebox.showinfo(
+                    t("updates.title", "Update"),
+                    t(
+                        "updates.no_compatible_asset",
+                        "Version {version} is available, but no compatible installer was found.",
+                        version=result.latest_version or "?",
+                    ),
+                )
             return
 
         notes = (result.release_notes or "").strip()
         if len(notes) > 350:
             notes = notes[:350].rstrip() + "..."
 
-        prompt = (
-            f"Une nouvelle version est disponible: {result.latest_version}\n\n"
-            f"Fichier compatible detecte: {asset.name}\n"
-            f"Taille: {asset.size // 1024} Ko\n"
+        notes_link = result.release_url or f"https://github.com/Luxinenglish/Encryption_systeme/releases/tag/{result.latest_version}"
+
+        prompt = t(
+            "updates.available_prompt_header",
+            "A new version is available: {version}\n\n{asset_name}\nSize: {size_kb} KB\n",
+            version=result.latest_version or "?",
+            asset_name=asset.name,
+            size_kb=asset.size // 1024,
         )
         if notes:
-            prompt += f"\nNotes:\n{notes}\n"
-        prompt += "\nVoulez-vous telecharger cette mise a jour maintenant ?"
+            prompt += t(
+                "updates.notes_block",
+                "\nRelease notes:\n{notes}\n\nFull notes:\n{url}\n",
+                notes=notes,
+                url=notes_link,
+            )
+        prompt += t("updates.download_question", "\nDownload this update now?")
 
-        if messagebox.askyesno("Mise a jour disponible", prompt):
+        if messagebox.askyesno(t("updates.available_title", "Update available"), prompt):
             self._download_update_asset(asset, result.latest_version or "")
 
     def _download_update_asset(self, asset, version_label: str):
         if hasattr(self, "_update_btn"):
-            self._update_btn.config(state="disabled", text="Telechargement...")
+            self._update_btn.config(state="disabled", text=t("updates.downloading", "Downloading..."))
 
         def worker():
             try:
                 downloaded = self._updater.download_asset(asset)
                 self.after(0, lambda: self._on_update_download_done(downloaded, version_label))
             except Exception as exc:
-                self.after(0, lambda: messagebox.showerror("Mise a jour", f"Echec du telechargement: {exc}"))
+                self.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        t("updates.title", "Update"),
+                        t("updates.download_failed", "Download failed: {reason}", reason=exc),
+                    ),
+                )
             finally:
                 self.after(0, self._reset_update_button)
 
         threading.Thread(target=worker, daemon=True).start()
 
     def _on_update_download_done(self, downloaded_path: Path, version_label: str):
-        msg = (
-            f"Version {version_label} telechargee.\n\n"
-            f"Fichier: {downloaded_path}\n\n"
-            "Ouvrir le fichier maintenant ?"
+        msg = t(
+            "updates.download_done",
+            "Version {version} downloaded.\n\nFile: {path}\n\nOpen it now?",
+            version=version_label,
+            path=downloaded_path,
         )
-        if messagebox.askyesno("Mise a jour telechargee", msg):
+        if messagebox.askyesno(t("updates.download_done_title", "Update downloaded"), msg):
             self._open_downloaded_file(downloaded_path)
 
     def _reset_update_button(self):
         if hasattr(self, "_update_btn"):
-            self._update_btn.config(state="normal", text="Verifier les MAJ")
+            self._update_btn.config(state="normal", text=t("buttons.verify_updates", "Check for Updates"))
 
     def _open_downloaded_file(self, path: Path):
         try:
@@ -975,7 +1049,84 @@ class App(ROOT_CLASS):
                 return
             subprocess.Popen(["xdg-open", str(path)])
         except Exception as exc:
-            messagebox.showerror("Mise a jour", f"Impossible d'ouvrir le fichier: {exc}")
+            messagebox.showerror(
+                t("updates.title", "Update"),
+                t("updates.open_failed", "Unable to open file: {reason}", reason=exc),
+            )
+
+    # ── Settings Tab ──────────────────────────────────────────────────────────
+
+    def _build_settings_pane(self, parent: tk.Frame):
+        """Build the settings panel."""
+        # Title
+        tk.Label(parent, text=t("settings.title"), font=F_TITLE, fg=TEXT, bg=BG).pack(anchor="w", pady=(0, 20))
+
+        # Language section
+        tk.Label(parent, text=t("settings.language"), font=("Segoe UI", 11, "bold"), fg=MUTED, bg=BG).pack(anchor="w", pady=(0, 8))
+        
+        lang_frame = tk.Frame(parent, bg=BG)
+        lang_frame.pack(anchor="w", pady=(0, 16))
+        
+        current_lang = self._config.get_language()
+        lang_var = tk.StringVar(value=current_lang)
+        
+        def _change_language(lang):
+            set_language(lang)
+            self._config.set_language(lang)
+            messagebox.showinfo(
+                t("settings.language_changed_title", "Language changed"),
+                t("settings.language_changed_msg", "Language changed successfully.\nRestart the app to apply changes."),
+            )
+        
+        tk.Radiobutton(
+            lang_frame,
+            text=t("settings.language_en"),
+            variable=lang_var,
+            value="en",
+            font=F_BODY,
+            fg=TEXT,
+            bg=BG,
+            activeforeground=TEXT,
+            activebackground=BG,
+            selectcolor=BG3,
+            cursor="hand2",
+            command=lambda: _change_language("en"),
+        ).pack(side="left", padx=(0, 20))
+        
+        tk.Radiobutton(
+            lang_frame,
+            text=t("settings.language_fr"),
+            variable=lang_var,
+            value="fr",
+            font=F_BODY,
+            fg=TEXT,
+            bg=BG,
+            activeforeground=TEXT,
+            activebackground=BG,
+            selectcolor=BG3,
+            cursor="hand2",
+            command=lambda: _change_language("fr"),
+        ).pack(side="left", padx=(0, 20))
+
+        # Separator
+        separator = tk.Frame(parent, bg=BG2, height=1)
+        separator.pack(fill="x", pady=16)
+
+        # About section
+        tk.Label(parent, text=t("settings.about"), font=("Segoe UI", 11, "bold"), fg=MUTED, bg=BG).pack(anchor="w", pady=(0, 8))
+        
+        about_text = t("settings.about_text", version=APP_VERSION)
+        tk.Label(
+            parent,
+            text=about_text,
+            font=F_SMALL,
+            fg=TEXT,
+            bg=BG,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 16))
+
+        # Version info
+        tk.Label(parent, text=f"{t('settings.version')}: {APP_VERSION}", font=F_SMALL, fg=MUTED, bg=BG).pack(anchor="w")
 
 
 if __name__ == "__main__":

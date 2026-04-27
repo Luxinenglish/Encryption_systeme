@@ -6,6 +6,7 @@ from constants import (
     ACCENT, BG, BG2, BG3, BORDER, MUTED, SUCCESS, TEXT,
     F_BODY, F_SMALL,
 )
+from translator import t
 
 try:
     from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -17,14 +18,16 @@ except ImportError:
 
 
 class DropZone(tk.Frame):
-    _PLACEHOLDER = "📂📄  Drag a folder or file here\n\nor click to browse a file"
-
     def __init__(self, parent, height: int = 150, **kwargs):
         super().__init__(parent, bg=BG2, height=height, **kwargs)
         self.pack_propagate(False)
         self.selected_path: str | None = None
         self.is_file: bool = False
         self._callback = None
+        self._placeholder = t(
+            "dropzone.placeholder",
+            "📂📄  Drag a folder or file here\n\nor click to browse a file",
+        )
 
         self._border = tk.Frame(self, bg=BORDER, padx=2, pady=2)
         self._border.pack(fill="both", expand=True)
@@ -34,7 +37,7 @@ class DropZone(tk.Frame):
 
         self._lbl = tk.Label(
             self._inner,
-            text=self._PLACEHOLDER,
+            text=self._placeholder,
             font=F_BODY,
             fg=MUTED,
             bg=BG2,
@@ -66,12 +69,12 @@ class DropZone(tk.Frame):
         self._set_path(path)
 
     def _browse(self, _event=None):
-        path = filedialog.askopenfilename(title="Select a file")
+        path = filedialog.askopenfilename(title=t("dropzone.select_file", "Select a file"))
         if path:
             self._set_path(path)
 
     def browse_folder(self):
-        path = filedialog.askdirectory(title="Select a folder")
+        path = filedialog.askdirectory(title=t("dropzone.select_folder", "Select a folder"))
         if path:
             self._set_path(path)
 
@@ -80,7 +83,7 @@ class DropZone(tk.Frame):
             self.selected_path = path
             self.is_file = True
             self._lbl.config(
-                text=f"✅  📄 {os.path.basename(path)}",
+                text=t("dropzone.selected_file", "✅  📄 {name}", name=os.path.basename(path)),
                 fg=SUCCESS,
                 font=("Segoe UI", 12, "bold"),
             )
@@ -91,7 +94,7 @@ class DropZone(tk.Frame):
             self.selected_path = path
             self.is_file = False
             self._lbl.config(
-                text=f"✅  📂 {os.path.basename(path)}",
+                text=t("dropzone.selected_folder", "✅  📂 {name}", name=os.path.basename(path)),
                 fg=SUCCESS,
                 font=("Segoe UI", 12, "bold"),
             )
@@ -99,12 +102,15 @@ class DropZone(tk.Frame):
             if self._callback:
                 self._callback(path)
         else:
-            messagebox.showerror("Error", "Please drop a valid file or folder.")
+            messagebox.showerror(
+                t("errors.error", "Error"),
+                t("errors.drag_invalid", "Please drop a valid file or folder."),
+            )
 
     def reset(self):
         self.selected_path = None
         self.is_file = False
-        self._lbl.config(text=self._PLACEHOLDER, fg=MUTED, font=F_BODY)
+        self._lbl.config(text=self._placeholder, fg=MUTED, font=F_BODY)
         self._set_border(BORDER)
 
 

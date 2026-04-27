@@ -15,7 +15,7 @@ Le résultat est dans `dist/EncryptionSystem.exe`.
 ### Via ligne de commande
 
 ```bash
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
 ```
 
 ### Via l'interface Inno Setup
