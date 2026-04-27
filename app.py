@@ -8,7 +8,7 @@ from tkinter import messagebox
 
 
 from constants import (
-    ACCENT, BG, BG2, ERROR, MUTED, SUCCESS, TEXT,
+    ACCENT, BG, BG2, BG3, ERROR, MUTED, SUCCESS, TEXT,
     F_BODY, F_MONO, F_SMALL, F_TITLE, APP_VERSION, GITHUB_REPO,
 )
 from crypto import (
