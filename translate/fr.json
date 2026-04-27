@@ -1,0 +1,77 @@
+{
+  "app": {
+    "title": "Encryption System",
+    "subtitle": "Fernet · AES-128-CBC + HMAC-SHA256",
+    "footer": "Made With ❤️ by Lux_"
+  },
+  "tabs": {
+    "encrypt": "🔒  Encrypt",
+    "decrypt": "🔓  Decrypt",
+    "keys": "🗝️  My Keys"
+  },
+  "auth": {
+    "first_use_title": "Premiere utilisation",
+    "first_use_msg": "Definis un mot de passe pour proteger l'acces au coffre.",
+    "setup_password_title": "Configurer le mot de passe",
+    "new_password": "Nouveau mot de passe",
+    "confirm_password": "Confirmer le mot de passe",
+    "unlock_title": "Deverrouiller le coffre",
+    "password": "Mot de passe",
+    "error_password_too_short": "Le mot de passe doit faire au moins 8 caracteres.",
+    "error_passwords_mismatch": "Les mots de passe ne correspondent pas.",
+    "error_incorrect_password": "Mot de passe incorrect.",
+    "btn_save": "Enregistrer",
+    "btn_unlock": "Ouvrir",
+    "btn_quit": "Quitter"
+  },
+  "encrypt": {
+    "title": "Select a folder to encrypt",
+    "btn_browse": "📂  Or browse a folder",
+    "algorithm_label": "Algorithm",
+    "btn_encrypt": "🔒  Encrypt",
+    "decryption_key": "Decryption key",
+    "btn_copy": "📋 Copy",
+    "btn_save": "💾 Save",
+    "key_copied_title": "Key copied",
+    "key_copied_msg": "Key copied to clipboard!\n\n⚠️  Keep it safe — without it,\nthe encrypted folder will be unrecoverable.",
+    "save_key_title": "Save key",
+    "key_name": "Key name",
+    "error_name_empty": "Name cannot be empty.",
+    "key_saved_title": "Key saved",
+    "key_saved_msg": "Key « {name} » saved in My Keys.",
+    "error_key_exists": "« {name} » already exists — choose another name.",
+    "btn_encrypt_another": "↩  Encrypt another file or folder",
+    "warning_no_file": "Please first select a file or folder.",
+    "encrypting": "Encrypting…",
+    "success_msg": "✅  {count} file(s) encrypted\n{icon}  {path}"
+  },
+  "decrypt": {
+    "title": "Select an encrypted file or folder",
+    "btn_browse": "📂  Or browse a folder",
+    "decryption_key": "Decryption key",
+    "btn_choose_key": "🗝️ Choose from my keys",
+    "btn_decrypt": "🔓  Decrypt",
+    "warning_dnd": "Drag and drop not available. Use the browse button.",
+    "decrypting": "Decrypting…",
+    "success_msg": "✅  {count} file(s) decrypted\n{icon}  {path}"
+  },
+  "keys": {
+    "title": "My Keys",
+    "empty": "No keys saved yet.",
+    "btn_new": "➕ Create new key",
+    "btn_delete": "🗑  Delete",
+    "btn_view": "👁️  View",
+    "col_name": "Name",
+    "col_path": "Path",
+    "col_algo": "Algorithm"
+  },
+  "buttons": {
+    "verify_updates": "Verifier les MAJ"
+  },
+  "errors": {
+    "error": "Error",
+    "warning": "Warning",
+    "drag_invalid": "Please drop a valid file or folder."
+  }
+}
+
