@@ -7,5 +7,4 @@
 .venv
 .venv-linux
 *.spec
-*.iss
 .gitignore
