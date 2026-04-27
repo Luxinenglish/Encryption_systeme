@@ -82,7 +82,7 @@ begin
       SelectedLanguage := 'en';
 
     // Create config directory if it doesn't exist
-    ConfigDir := ExpandConstant('{userhome}\.EncryptionSystem');
+    ConfigDir := ExpandConstant('{userprofile}\.EncryptionSystem');
     if not DirExists(ConfigDir) then
       CreateDir(ConfigDir);
 
