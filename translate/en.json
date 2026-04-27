@@ -68,6 +68,18 @@
   "buttons": {
     "verify_updates": "Check for Updates"
   },
+  "settings": {
+    "title": "⚙️  Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "language_en": "English",
+    "language_fr": "Français",
+    "theme_dark": "Dark",
+    "theme_light": "Light",
+    "about": "About",
+    "version": "Version",
+    "about_text": "Encryption System v{version}\n\nA secure encryption system for your files.\n\nMade with ❤️ by Lux_"
+  },
   "errors": {
     "error": "Error",
     "warning": "Warning",

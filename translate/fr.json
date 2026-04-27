@@ -68,6 +68,18 @@
   "buttons": {
     "verify_updates": "Verifier les MAJ"
   },
+  "settings": {
+    "title": "⚙️  Paramètres",
+    "language": "Langue",
+    "theme": "Thème",
+    "language_en": "English",
+    "language_fr": "Français",
+    "theme_dark": "Sombre",
+    "theme_light": "Clair",
+    "about": "À propos",
+    "version": "Version",
+    "about_text": "Encryption System v{version}\n\nUn système de chiffrement sécurisé pour vos fichiers.\n\nDéveloppé avec ❤️ par Lux_"
+  },
   "errors": {
     "error": "Error",
     "warning": "Warning",

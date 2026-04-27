@@ -8,7 +8,7 @@ from tkinter import messagebox
 
 
 from constants import (
-    ACCENT, BG, BG2, BG3, ERROR, MUTED, SUCCESS, TEXT,
+    ACCENT, BG, BG2, ERROR, MUTED, SUCCESS, TEXT,
     F_BODY, F_MONO, F_SMALL, F_TITLE, APP_VERSION, GITHUB_REPO,
 )
 from crypto import (
@@ -20,11 +20,17 @@ from key_manager import KeyManager
 from auth_manager import AuthManager
 from updater import UpdateService
 from widgets import DND_AVAILABLE, ROOT_CLASS, DropZone, action_btn, ghost_btn
+from translator import t, init_translator, set_language
+from config_manager import get_config
 
 
 class App(ROOT_CLASS):
     def __init__(self):
         super().__init__()
+        # Initialize translator and config
+        self._config = get_config()
+        init_translator(self._config.get_language())
+        
         self.title("Encryption System")
         self.geometry("700x620")
         self.minsize(600, 520)
@@ -263,9 +269,11 @@ class App(ROOT_CLASS):
         self._btn_enc  = self._tab_btn(bar, "🔒  Encrypt",  lambda: self._show("enc"))
         self._btn_dec  = self._tab_btn(bar, "🔓  Decrypt",  lambda: self._show("dec"))
         self._btn_keys = self._tab_btn(bar, "🗝️  My Keys",  lambda: self._show("keys"))
+        self._btn_settings = self._tab_btn(bar, "⚙️  Settings",  lambda: self._show("settings"))
         self._btn_enc.pack(side="left", fill="x", expand=True)
         self._btn_dec.pack(side="left", fill="x", expand=True)
         self._btn_keys.pack(side="left", fill="x", expand=True)
+        self._btn_settings.pack(side="left", fill="x", expand=True)
 
         # Panels
         self._panes: dict[str, tk.Frame] = {}
@@ -282,6 +290,10 @@ class App(ROOT_CLASS):
         self._panes["keys"] = keys
         self._build_keys_pane(keys)
 
+        settings = tk.Frame(self, bg=BG)
+        self._panes["settings"] = settings
+        self._build_settings_pane(settings)
+
         self._show("enc")
 
         # Footer
@@ -290,7 +302,7 @@ class App(ROOT_CLASS):
         tk.Label(ftr, text="Made With ❤️ by Lux_", font=F_SMALL, fg=MUTED, bg=BG3).pack(side="left", padx=10)
         self._update_btn = tk.Button(
             ftr,
-            text="Verifier les MAJ",
+            text=t("buttons.verify_updates"),
             font=F_SMALL,
             fg=MUTED,
             bg=BG3,
@@ -332,6 +344,7 @@ class App(ROOT_CLASS):
         self._btn_enc.config( bg=ACCENT if tab == "enc"  else BG2, fg=TEXT if tab == "enc"  else MUTED)
         self._btn_dec.config( bg=ACCENT if tab == "dec"  else BG2, fg=TEXT if tab == "dec"  else MUTED)
         self._btn_keys.config(bg=ACCENT if tab == "keys" else BG2, fg=TEXT if tab == "keys" else MUTED)
+        self._btn_settings.config(bg=ACCENT if tab == "settings" else BG2, fg=TEXT if tab == "settings" else MUTED)
         if tab == "keys":
             self._refresh_keys()
 
@@ -925,13 +938,15 @@ class App(ROOT_CLASS):
         if len(notes) > 350:
             notes = notes[:350].rstrip() + "..."
 
+        notes_link = result.release_url or f"https://github.com/Luxinenglish/Encryption_systeme/releases/tag/{result.latest_version}"
+
         prompt = (
             f"Une nouvelle version est disponible: {result.latest_version}\n\n"
-            f"Fichier compatible detecte: {asset.name}\n"
-            f"Taille: {asset.size // 1024} Ko\n"
+            f"{asset.name}\n"
+            f"============= Taille: {asset.size // 1024} Ko =============\n"
         )
         if notes:
-            prompt += f"\nNotes:\n{notes}\n"
+            prompt += f"\nNotes:\n{notes}\n\nLien vers la note complète:\n{notes_link}\n"
         prompt += "\nVoulez-vous telecharger cette mise a jour maintenant ?"
 
         if messagebox.askyesno("Mise a jour disponible", prompt):
@@ -976,6 +991,77 @@ class App(ROOT_CLASS):
             subprocess.Popen(["xdg-open", str(path)])
         except Exception as exc:
             messagebox.showerror("Mise a jour", f"Impossible d'ouvrir le fichier: {exc}")
+
+    # ── Settings Tab ──────────────────────────────────────────────────────────
+
+    def _build_settings_pane(self, parent: tk.Frame):
+        """Build the settings panel."""
+        # Title
+        tk.Label(parent, text=t("settings.title"), font=F_TITLE, fg=TEXT, bg=BG).pack(anchor="w", pady=(0, 20))
+
+        # Language section
+        tk.Label(parent, text=t("settings.language"), font=("Segoe UI", 11, "bold"), fg=MUTED, bg=BG).pack(anchor="w", pady=(0, 8))
+        
+        lang_frame = tk.Frame(parent, bg=BG)
+        lang_frame.pack(anchor="w", pady=(0, 16))
+        
+        current_lang = self._config.get_language()
+        lang_var = tk.StringVar(value=current_lang)
+        
+        def _change_language(lang):
+            set_language(lang)
+            self._config.set_language(lang)
+            messagebox.showinfo("Language Changed", "Language changed successfully.\nRestart the app to apply changes.")
+        
+        tk.Radiobutton(
+            lang_frame,
+            text=t("settings.language_en"),
+            variable=lang_var,
+            value="en",
+            font=F_BODY,
+            fg=TEXT,
+            bg=BG,
+            activeforeground=TEXT,
+            activebackground=BG,
+            selectcolor=BG3,
+            cursor="hand2",
+            command=lambda: _change_language("en"),
+        ).pack(side="left", padx=(0, 20))
+        
+        tk.Radiobutton(
+            lang_frame,
+            text=t("settings.language_fr"),
+            variable=lang_var,
+            value="fr",
+            font=F_BODY,
+            fg=TEXT,
+            bg=BG,
+            activeforeground=TEXT,
+            activebackground=BG,
+            selectcolor=BG3,
+            cursor="hand2",
+            command=lambda: _change_language("fr"),
+        ).pack(side="left", padx=(0, 20))
+
+        # Separator
+        separator = tk.Frame(parent, bg=BG2, height=1)
+        separator.pack(fill="x", pady=16)
+
+        # About section
+        tk.Label(parent, text=t("settings.about"), font=("Segoe UI", 11, "bold"), fg=MUTED, bg=BG).pack(anchor="w", pady=(0, 8))
+        
+        about_text = t("settings.about_text", version=APP_VERSION)
+        tk.Label(
+            parent,
+            text=about_text,
+            font=F_SMALL,
+            fg=TEXT,
+            bg=BG,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 16))
+
+        # Version info
+        tk.Label(parent, text=f"{t('settings.version')}: {APP_VERSION}", font=F_SMALL, fg=MUTED, bg=BG).pack(anchor="w")
 
 
 if __name__ == "__main__":
