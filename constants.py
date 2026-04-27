@@ -20,7 +20,7 @@ F_MONO  = ("Consolas", 10)
 # ─── Application / Updates ───────────────────────────────────────────────────
 
 # Version locale de l'application (semver conseille).
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 
 # Depot GitHub au format "owner/repo" utilise pour verifier les releases.
 # Adapte cette valeur a ton depot reel si necessaire.
