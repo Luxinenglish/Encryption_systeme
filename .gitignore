@@ -6,4 +6,11 @@
 /AppDir
 .venv
 .venv-linux
+__pycache__/
 .gitignore
+*.spec
+*.iss
+*.bat
+*.sh
+*.log
+*.pyc
