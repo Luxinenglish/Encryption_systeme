@@ -53,11 +53,24 @@ class App(ROOT_CLASS):
     # ── Icon ──────────────────────────────────────────────────────────────────
 
     def _set_icon(self):
-        icon_path = Path(__file__).parent / "img" / "logo.png"
-        if icon_path.exists():
-            icon = tk.PhotoImage(file=str(icon_path))
-            self.iconphoto(True, icon)
-            self._icon = icon  # keep a reference to prevent garbage collection
+        """Set the application window icon."""
+        try:
+            # Handle both development and PyInstaller bundled versions
+            if getattr(sys, 'frozen', False):
+                # Running as a bundled executable (PyInstaller)
+                base_path = Path(sys._MEIPASS)
+            else:
+                # Running as a script
+                base_path = Path(__file__).parent
+            
+            icon_path = base_path / "img" / "logo.png"
+            if icon_path.exists():
+                icon = tk.PhotoImage(file=str(icon_path))
+                self.iconphoto(True, icon)
+                self._icon = icon  # keep a reference to prevent garbage collection
+        except Exception as e:
+            # Silently fail if icon cannot be loaded
+            print(f"Warning: Could not load icon: {e}")
 
     # ── Access password ───────────────────────────────────────────────────────
 

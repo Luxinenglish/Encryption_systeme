@@ -6,5 +6,4 @@
 /AppDir
 .venv
 .venv-linux
-*.spec
 .gitignore

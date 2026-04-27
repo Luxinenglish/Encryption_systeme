@@ -5,6 +5,7 @@ Supports multiple languages with JSON translation files.
 
 import json
 import locale
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
@@ -39,7 +40,15 @@ class TranslationManager:
     
     def _load_translations(self) -> dict[str, Any]:
         """Load translation JSON file for the current language."""
-        translate_dir = Path(__file__).parent / "translate"
+        # Handle both development and PyInstaller bundled versions
+        if getattr(sys, 'frozen', False):
+            # Running as a bundled executable (PyInstaller)
+            base_path = Path(sys._MEIPASS)
+        else:
+            # Running as a script
+            base_path = Path(__file__).parent
+        
+        translate_dir = base_path / "translate"
         lang_file = translate_dir / f"{self.language}.json"
         
         if not lang_file.exists():
