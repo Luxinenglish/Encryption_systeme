@@ -72,6 +72,7 @@ var
   ConfigDir: string;
   ConfigFile: string;
   ConfigContent: string;
+  UserProfile: string;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -81,8 +82,11 @@ begin
     else
       SelectedLanguage := 'en';
 
+    // Get user profile directory from environment variable
+    UserProfile := GetEnv('USERPROFILE');
+
     // Create config directory if it doesn't exist
-    ConfigDir := ExpandConstant('{userprofile}\.EncryptionSystem');
+    ConfigDir := UserProfile + '\.EncryptionSystem';
     if not DirExists(ConfigDir) then
       CreateDir(ConfigDir);
 
