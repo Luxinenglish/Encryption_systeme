@@ -1,16 +1,2 @@
 /.idea
-/.claude
-/build
-/dist
-/installer_output
-/AppDir
-.venv
-.venv-linux
-__pycache__/
-.gitignore
-*.spec
-*.iss
-*.bat
-*.sh
-*.log
-*.pyc
+/venv*
