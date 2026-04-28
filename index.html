@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Encryption Systeme — application desktop Python (Tkinter) pour chiffrer et déchiffrer des fichiers et dossiers (Fernet, AES-256-GCM, ChaCha20-Poly1305)." />
+  <title>Encryption Systeme — Chiffrement de fichiers/dossiers</title>
+  <link rel="icon" href="/assets/img/logo.png" />
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+  <meta property="og:title" content="Encryption Systeme" />
+  <meta property="og:description" content="Chiffrez/déchiffrez fichiers et dossiers (Fernet, AES-256-GCM, ChaCha20-Poly1305)." />
+  <meta property="og:type" content="website" />
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <img src="/assets/img/logo.png" alt="Logo Encryption Systeme" width="28" height="28" />
+      <span>Encryption Systeme</span>
+    </a>
+
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="/features/">Fonctionnalités</a>
+      <a href="/download/">Téléchargement</a>
+      <a href="/security/">Sécurité</a>
+      <a href="/faq/">FAQ</a>
+      <a class="btn btn--ghost" href="/about/">À propos</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="container hero-inner">
+      <div>
+        <p class="kicker">Application desktop (Python + Tkinter)</p>
+        <h1>Chiffrez et déchiffrez vos fichiers et dossiers simplement.</h1>
+        <p class="lead">
+          Encryption Systeme est une application Windows construite en Python qui propose plusieurs algorithmes modernes
+          (Fernet, AES-256-GCM, ChaCha20-Poly1305) et une gestion locale des clés.
+        </p>
+
+        <div class="cta">
+          <a class="btn" href="/download/">Télécharger</a>
+          <a class="btn btn--ghost" href="/features/">Voir les fonctionnalités</a>
+        </div>
+
+        <ul class="badges" aria-label="Points clés">
+          <li>Fichiers & dossiers</li>
+          <li>Clés locales (JSON)</li>
+          <li>Drag-and-drop (optionnel)</li>
+          <li>Mises à jour via GitHub Releases</li>
+        </ul>
+      </div>
+
+      <div class="card preview" aria-label="Aperçu">
+        <div class="preview-top">
+          <div class="dot dot--red"></div>
+          <div class="dot dot--yellow"></div>
+          <div class="dot dot--green"></div>
+          <span class="preview-title">Aperçu</span>
+        </div>
+        <div class="preview-body">
+          <p class="muted">Interface Tkinter (captures à ajouter dans <code>assets/img</code>)</p>
+          <div class="screenshot-placeholder">
+            <span>Ajoutez une capture : <code>assets/img/screenshot.png</code></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>Algorithmes pris en charge</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>Fernet</h3>
+          <p>Simple et robuste, basé sur AES-128-CBC (via la lib <code>cryptography</code>).</p>
+        </article>
+        <article class="card">
+          <h3>AES-256-GCM</h3>
+          <p>Chiffrement authentifié recommandé pour de nombreux cas d’usage.</p>
+        </article>
+        <article class="card">
+          <h3>ChaCha20-Poly1305</h3>
+          <p>Alternative moderne performante, notamment sur machines sans accélération AES.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="two-col">
+        <div>
+          <h2>Téléchargement</h2>
+          <p>
+            Le site pointe vers les releases GitHub. Vous pouvez aussi proposer un lien direct vers l’installateur Inno Setup.
+          </p>
+          <ul>
+            <li><strong>Setup</strong> : installation classique (recommandé).</li>
+            <li><strong>Portable</strong> : exécutable seul (utile en déplacement).</li>
+          </ul>
+          <a class="btn" href="/download/">Aller sur la page de téléchargement</a>
+        </div>
+        <div class="card">
+          <h3>Développeurs</h3>
+          <p class="muted">Installation en mode dev (extrait du README) :</p>
+          <pre><code>python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python app.py</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p class="muted">
+      © <span id="year"></span> Encryption Systeme — <a href="https://github.com/" rel="noopener">GitHub</a>
+    </p>
+    <p class="muted"><a href="/security/">Sécurité</a> · <a href="/about/">À propos</a></p>
+  </div>
+</footer>
+
+<script src="/assets/js/main.js"></script>
+</body>
+</html>
+
