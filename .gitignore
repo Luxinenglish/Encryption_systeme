@@ -1,2 +1,11 @@
 /.idea
 /venv*
+
+# Environnements virtuels Python
+.venv/
+.venv-*/
+.venv*/
+**/.venv/
+**/.venv-*/
+**/.venv*/
+
