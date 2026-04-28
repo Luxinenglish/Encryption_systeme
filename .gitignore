@@ -7,6 +7,11 @@
 .venv
 .venv-linux
 __pycache__/
+/about
+/download
+/faq
+/features
+/security
 .gitignore
 *.spec
 *.iss
@@ -14,3 +19,4 @@ __pycache__/
 *.sh
 *.log
 *.pyc
+
