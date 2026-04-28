@@ -1,46 +1,42 @@
-# Encryption Systeme
+# Encryption Systeme — Site web
 
-Application desktop Python pour chiffrer et déchiffrer des fichiers/dossiers avec une interface graphique Tkinter.
+Site vitrine statique (HTML/CSS/JS) pour présenter l’application **Encryption Systeme**.
 
-## Fonctionnalités
+## Structure
 
-- Chiffrement d'un **fichier** ou d'un **dossier**
-- Déchiffrement d'un **fichier** ou d'un **dossier**
-- Support de plusieurs algorithmes :
-    - Fernet (AES-128-CBC)
-    - AES-256-GCM
-    - ChaCha20-Poly1305
-- Glisser-déposer (si `tkinterdnd2` est disponible)
-- Gestion locale des clés (sauvegarde JSON)
-- Vérification de mise à jour via GitHub Releases (asset adapté à l'OS)
+- `index.html` : page d’accueil
+- `features/` : fonctionnalités
+- `download/` : téléchargement
+- `security/` : sécurité
+- `faq/` : FAQ
+- `about/` : à propos
+- `assets/` : images, CSS, JS
 
-## Technologies
+## Personnalisation rapide
 
-- Python 3
-- Tkinter
-- `cryptography`
-- `tkinterdnd2` (optionnel mais recommandé pour le drag-and-drop)
-- PyInstaller (build `.exe`)
-- Inno Setup (build installateur)
+1. Remplacer l’URL GitHub dans `download/index.html` (chercher `OWNER/REPO`).
+2. Remplacer les liens GitHub dans `about/index.html`.
+3. Ajouter une capture d’écran :
+   - `assets/img/screenshot.png`
 
-## Installation (mode développement)
+## Lancer en local
 
-1. Créer un environnement virtuel
-2. Installer les dépendances
-3. Lancer l'application
+Depuis `Encryption_systeme_website` :
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python app.py
+python -m http.server 5173
 ```
 
-## Configuration des mises à jour
+Puis ouvrir : http://localhost:5173/
 
-Le système de MAJ utilise les releases GitHub. Configure ces valeurs dans `constants.py`:
+## Déploiement (GitHub Pages)
 
-- `APP_VERSION` : version locale actuelle de l'application
-- `GITHUB_REPO` : dépôt au format `owner/repo`
+- Paramétrer GitHub Pages sur la branche qui contient ce dossier.
+- Source : `/(root)`.
 
-L'application détecte automatiquement un asset compatible selon l'OS (par exemple `.exe` sous Windows, `.deb` sur Debian/Ubuntu) et propose son téléchargement.
+> Important : ce site utilise des chemins absolus (`/assets/...`).
+> Sur GitHub Pages avec un *project site* (ex: `https://user.github.io/repo/`), il faut soit :
+> - déployer en *user site* (racine du domaine), soit
+> - remplacer les chemins par des chemins relatifs, soit
+> - configurer un `base` (si vous passez à un bundler comme Vite).
+
