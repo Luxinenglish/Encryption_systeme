@@ -34,7 +34,7 @@ Puis ouvrir : http://localhost:5173/
 - Paramétrer GitHub Pages sur la branche qui contient ce dossier.
 - Source : `/(root)`.
 
-> Important : ce site utilise des chemins absolus (`/assets/...`).
+> Important : ce site utilise des chemins absolus (`./assets/...`).
 > Sur GitHub Pages avec un *project site* (ex: `https://user.github.io/repo/`), il faut soit :
 > - déployer en *user site* (racine du domaine), soit
 > - remplacer les chemins par des chemins relatifs, soit
